@@ -1,4 +1,4 @@
-# Test Vite Project
+# Testbench Vite Project
 
 This directory contains a minimal [Vite](https://vitejs.dev/) setup for local testing.
 
