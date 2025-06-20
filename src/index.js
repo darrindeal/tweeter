@@ -52,11 +52,20 @@ export class PusherDO extends DurableObject {
 
     if (url.pathname.endsWith("/events") && request.method === "POST") {
       const body = await request.json();
+
       await this.broadcast(body);
-      return new Response(JSON.stringify({ sent: true }), {
+      let res = new Response(JSON.stringify({ sent: true }), {
         status: 202,
         headers: { "content-type": "application/json" },
       });
+
+      res.headers.set("Access-Control-Allow-Origin","*");
+
+      // Append to/Add Vary header so browser will cache response correctly
+      res.headers.append("Vary", "Origin");
+
+      return res;
+
     }
 
     return new Response("Not found", { status: 404 });
@@ -269,6 +278,10 @@ export default {
     const id = env.PUSHER.idFromName(env.PUSHER_APP_ID);
     const stub = env.PUSHER.get(id);
 
+    if(request.method === "OPTIONS"){
+      return this.handleOptions(request);
+    }
+
     if (url.pathname === wsPath && request.headers.get("Upgrade") === "websocket") {
       return stub.fetch(request);
     }
@@ -280,4 +293,33 @@ export default {
 
     return new Response("Not found", { status: 404 });
   },
+   async handleOptions(request) {
+     const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET,HEAD,POST,OPTIONS",
+      "Access-Control-Max-Age": "86400",
+    };
+      if (
+        request.headers.get("Origin") !== null &&
+        request.headers.get("Access-Control-Request-Method") !== null &&
+        request.headers.get("Access-Control-Request-Headers") !== null
+      ) {
+        // Handle CORS preflight requests.
+        return new Response(null, {
+          headers: {
+            ...corsHeaders,
+            "Access-Control-Allow-Headers": request.headers.get(
+              "Access-Control-Request-Headers",
+            ),
+          },
+        });
+      } else {
+        // Handle standard OPTIONS request.
+        return new Response(null, {
+          headers: {
+            Allow: "GET, HEAD, POST, OPTIONS",
+          },
+        });
+      }
+    }
 };

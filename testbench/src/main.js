@@ -16,9 +16,9 @@ const pusher = new Pusher(APP_KEY, {
   wsHost: HOST,
   wsPort: PORT,
   wssPort: PORT,
-  wsPath: `/app/${APP_KEY}`,
   forceTLS: false,
   disableStats: true,
+  cluster: 'mt1'
 });
 
 pusher.connection.bind('state_change', ({ current }) => {
